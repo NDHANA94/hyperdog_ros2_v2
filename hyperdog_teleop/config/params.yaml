@@ -1,0 +1,21 @@
+/hyperdog_teleop_gamepad_node:
+  ros__parameters:
+    # ---------------------------------
+    min_height: 80    # mm 
+    max_height: 300   # mm 
+    # ---------------------------------
+    roll_limit: 45    # deg
+    pitch_limit: 40   # deg
+    yaw_limit: 50     # deg
+    # ---------------------------------
+    lean_x_min: -150  # mm
+    lean_x_max: 150   # mm
+    lean_y_min: -100  # mm
+    lean_y_max: 100   # mm
+    # ---------------------------------
+    max_step_length_x: 250    # mm
+    max_step_length_y: 150    # mm
+    max_step_height: 220      # mm
+    
+  
+

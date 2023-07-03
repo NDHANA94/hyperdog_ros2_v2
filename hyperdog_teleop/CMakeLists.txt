@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(hyperdog_msgs)
+project(hyperdog_teleop)
 
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
@@ -17,17 +17,33 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-find_package(std_msgs REQUIRED)
+find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(hyperdogv2_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(builtin_interfaces REQUIRED)
-find_package(rosidl_default_generators REQUIRED)
 
-rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/JoyCtrlCmds.msg"
-  "msg/LegEndEffectorPositions.msg"
+add_executable(teleop_gamepad_logitech_f710_node src/teleop_gamepad_logitech_f710_node.cpp)
+target_include_directories(teleop_gamepad_logitech_f710_node PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+ament_target_dependencies(
+  teleop_gamepad_logitech_f710_node
+  "rclcpp"
+  "sensor_msgs"
+  "std_msgs"
+  "hyperdogv2_msgs"
+  "geometry_msgs"
 )
 
+install(TARGETS teleop_gamepad_logitech_f710_node
+  DESTINATION lib/${PROJECT_NAME})
+
+install(DIRECTORY 
+    config 
+    launch   
+    DESTINATION share/${PROJECT_NAME}   
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

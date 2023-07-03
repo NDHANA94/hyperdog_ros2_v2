@@ -101,6 +101,7 @@ class Ros2HyperdogPybulletNode(Node):
 
     def __sub_callback(self, msg:Float64MultiArray):
         self.target_joint_positions.data = msg.data
+        
 
     def __joint_state_pub_callback(self):
         if self.is_pybullet_running and len(self.current_joint_positions.data) == p.getNumJoints(self._robot) and self._joint_state_pub.get_subscription_count() != 0:

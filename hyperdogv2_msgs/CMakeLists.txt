@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(hyperdog_ctrl)
+project(hyperdogv2_msgs)
 
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
@@ -17,23 +17,17 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-find_package(hyperdogv2_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(builtin_interfaces REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
 
-add_executable(hyperdog_ctrl_node src/hyperdog_ctrl_node.cpp)
-target_include_directories(hyperdog_ctrl_node PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
-ament_target_dependencies(
-  hyperdog_ctrl_node
-  "hyperdogv2_msgs"
-  "std_msgs"
-  "sensor_msgs"
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/JoyCtrlCmds.msg"
+  "msg/LegEndEffectorPositions.msg"
 )
 
-install(TARGETS hyperdog_ctrl_node
-  DESTINATION lib/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
