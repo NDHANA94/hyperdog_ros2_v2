@@ -1,0 +1,25 @@
+
+hyperdog_ik_node:
+  ros__parameters:
+  # ----------------------------------------------------------
+  L1: 104   # length of the hip link
+  L2: 150   # length of the thigh link
+  L3: 150   # length of th calf link
+  L: 300    # distance between back thigh joint axis and front thigh joint axis
+  W: 172    # distance between left hip axis to right hip axis
+  # ----------------------------------------------------------
+  MIN_HEIGHT: 90
+  MAX_HEIGHT: 240
+  # ----------------------------------------------------------
+  ROLL_LIMIT: 60    # deg
+  PITCH_LIMIT: 45   # deg
+  YAW_LIMIT: 50     # deg
+  # ----------------------------------------------------------
+  FRONT_LEGS_ZERO_PNT_XY: [0, 100]
+  BACK_LEGS_ZERO_PNT_XY: [-30, 100]
+  # ----------------------------------------------------------
+  MIN_ANGLE_CALF_JOINT: 30 # minimum angle between thigh and calf links of legs
+  MAX_ANGLE_CALF_JOINT: 170 # maximum angle between thigh and calf links of legs
+  # ----------------------------------------------------------
+  LEG_JOINT_HOME_POSITIONS: [0, 0, 30]  
+  # ----------------------------------------------------------
