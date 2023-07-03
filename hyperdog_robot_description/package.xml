@@ -4,7 +4,7 @@
   <name>hyperdog_robot_description</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
-  <maintainer email="nipun.dhananjaya@gmail.com">Nipun Dhananjaya Weerakkodi</maintainer>
+  <maintainer email="nipun.dhananjaya@gmail.com">W.M. Nipun Dhananjaya</maintainer>
   <license>TODO: License declaration</license>
 
   <test_depend>ament_copyright</test_depend>
