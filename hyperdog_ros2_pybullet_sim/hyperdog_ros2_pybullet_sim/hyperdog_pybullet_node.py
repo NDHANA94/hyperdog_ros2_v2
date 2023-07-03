@@ -1,3 +1,27 @@
+"""
+MIT License
+
+Copyright (c) 2023 Nipun Dhananjaya
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
+
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float64MultiArray
@@ -103,7 +127,7 @@ class Ros2HyperdogPybulletNode(Node):
             self._robot_euler_angle_limits = self.get_parameter('ROBOT_EULER_ANGLE_LIMITS').get_parameter_value().double_array_value
             self._is_params_loaded = True
             # self.logger.info("[__update_params]: parametes are loaded") # for debug
-            # \\ if pybullet simulation time step is changed, update the timer_period_sec of the pybullet timer //
+            # ========= if pybullet simulation time step is changed, update the timer_period_sec of the pybullet timer =========
             if self._dt != dt_prev:
                 self.pybullet_timer.timer_period_ns = int(float(self._dt) * 1000 * 1000 * 1000)
         except:
@@ -111,26 +135,26 @@ class Ros2HyperdogPybulletNode(Node):
             # self._is_params_loaded = False
 
     def __pybullet_sim_timer_callback(self):
-        # \\ if pybullet is not initialized, initiate it //
+        # ========= if pybullet is not initialized, initiate it =========
         if not self._is_pybullet_initialized:
             self.is_pybullet_running = False
             self.__init_pybullet_sim()
-        # \\ else, run the simulation
+        # ========= else, run the simulation ============================
         else:
             if self._is_debug:
                 self.update_userDebugParams()
-            # \\ update joint positions //
+            # ========= update joint positions ==========================
             self.update_joint_positions()
-            # \\ make one step of simulation per on time beat of the timer //
+            # ========= make one step of simulation per on time beat of the timer =========
             p.stepSimulation()
-            # \\ make is_pybullet_running flag True //
+            # ========= make is_pybullet_running flag True ==============
             self.is_pybullet_running = True
-            # \\ update joint states //
+            # ========= update joint states =============================
             self.update_joint_states()
             
             
     def __init_pybullet_sim(self):
-        # \\ wait untill the parameters are loaded //
+        # ========= wait untill the parameters are loaded =========
         self.logger.info("[__init_pybullet_sim]: Initializing hyperdog pybullet simulation")
         while 1:
             self.update_params_timer.callback()
@@ -144,28 +168,28 @@ class Ros2HyperdogPybulletNode(Node):
                 robot_urdf_path = os.path.join(get_package_share_directory(self._robot_urdf_id[0]), self._robot_urdf_id[1])
                 # self.logger.info(robot_urdf_path) # for debug
                 self._robot = p.loadURDF(robot_urdf_path, [0,0,0.008], [0,0,0,1], useFixedBase=False) # flags = urdfFlags
-                # \\ set the robot to home position //
+                # ========= set the robot to home position =========
                 self.set_robot_home_position() 
-                # \\ print joint infos //
+                # ========= print joint infos ======================
                 for j in range(p.getNumJoints(self._robot)):
                     self.logger.info(f"[__init_pybullet_sim]: {p.getJointInfo(self._robot, j)}")
-                # \\ enable collision between lower legs //
+                # ========= enable collision between lower legs ====
                 for l0 in self._calf_joint_ids:
                     for l1 in self._calf_joint_ids:
                         if(l1>l0):
                             enableCollision = 1
                             print("collision for pair", l0, l1, p.getJointInfo(self._robot, l0)[12], p.getJointInfo(self._robot,l1)[12], "enabled=", enableCollision)
                             p.setCollisionFilterPair(self._robot, self._robot, 2,5,enableCollision)
-                # \\ set joint dynamics //
+                # ========= set joint dynamics =====================
                 for j in range (p.getNumJoints(self._robot)):
-                    p.changeDynamics(self._robot, j, linearDamping=0, angularDamping=0)
-                # \\ enable torque sensors //
-                [p.enableJointForceTorqueSensor(self._robot, i, True) for i in range(p.getNumJoints(self._robot))]
-                # \\ set camera //
-                p.getCameraImage(480,320)
-                # \\ set real-time simulation //
-                p.setRealTimeSimulation(0)
-                # \\ set user debug parameters //
+                    p.changeDynamics(self._robot, j, linearDamping=0, angularDamping=0) 
+                # ========= enable torque sensors ==================
+                [p.enableJointForceTorqueSensor(self._robot, i, True) for i in range(p.getNumJoints(self._robot))]     
+                # ========= set camera =============================
+                p.getCameraImage(480,320)               
+                # ========= set real-time simulation ===============
+                p.setRealTimeSimulation(0)               
+                # ========= set user debug parameters ==============
                 if self._is_debug:
                     self.add_userDebugParams()
                 self._is_pybullet_initialized = True
