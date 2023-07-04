@@ -1,0 +1,3 @@
+std_msgs/Header header
+float32 max_torque
+geometry_msgs/Transform body_transformation

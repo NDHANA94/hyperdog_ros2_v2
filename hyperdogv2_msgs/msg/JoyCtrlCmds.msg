@@ -8,8 +8,8 @@ bool side_move_mode
 uint8 gait_type
 
 # `robot's pose`
-# pose.position: displacement of center of mass of the robot from home position: displacement_x, displacement_y, height
-# pose.orientation: roll, pitch, yaw
+# pose.translation: displacement of center of mass of the robot from home position: displacement_x, displacement_y, height
+# pose.rotation: roll, pitch, yaw
 geometry_msgs/Transform body_transform
 
 # `robot's gait parameters`

@@ -145,27 +145,10 @@ class HyperdogTeleopF710 : public rclcpp::Node
       // if start state is not enable, disable walk mode
       else teleop_cmds_.walk = false;
 
-      // set topic header
+      // set topic header stamp
       teleop_cmds_.header.stamp = this->get_clock()->now();
       // publish the topic
       teleop_joy_publisher_->publish(teleop_cmds_);
-
-
-      
-
-      // debug
-      // RCLCPP_INFO(this->get_logger(), "robot start: %d", teleop_cmds_.start);
-      // RCLCPP_INFO(this->get_logger(), "robot walk: %i", teleop_cmds_.walk);
-      // RCLCPP_INFO(this->get_logger(), "side move mode: %i", teleop_cmds_.side_move_mode);
-      // RCLCPP_INFO(this->get_logger(), "target height: %lf", teleop_cmds_.body_transform.translation.z);
-      // RCLCPP_INFO(this->get_logger(), "step height: %lf", teleop_cmds_.gait_step.z);
-      // RCLCPP_INFO(this->get_logger(), "roll: %lf", teleop_cmds_.body_transform.rotation.x);
-      // RCLCPP_INFO(this->get_logger(), "pitch: %lf", teleop_cmds_.body_transform.rotation.y);
-      // RCLCPP_INFO(this->get_logger(), "yaw: %lf", teleop_cmds_.body_transform.rotation.z);
-      // RCLCPP_INFO(this->get_logger(), "lean x: %lf", teleop_cmds_.body_transform.translation.x);
-      // RCLCPP_INFO(this->get_logger(), "lean y: %lf", teleop_cmds_.body_transform.translation.y);
-      // RCLCPP_INFO(this->get_logger(), "step len x: %lf", teleop_cmds_.gait_step.x);
-      // RCLCPP_INFO(this->get_logger(), "step len y: %lf", teleop_cmds_.gait_step.y);
       
     }
 

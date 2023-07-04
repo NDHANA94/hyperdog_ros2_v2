@@ -25,6 +25,8 @@ SOFTWARE.
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float64MultiArray
+from sensor_msgs.msg import Imu
+from hyperdogv2_msgs.msg import PybulletUserDebugParams
 from ament_index_python.packages import get_package_share_directory
 import os
 
@@ -39,6 +41,7 @@ import time
 
 class Ros2HyperdogPybulletNode(Node):
     def __init__(self):
+        # ros params
         self._is_debug = None
         self._num_of_joints = None
         self._hip_joint_ids = None
@@ -49,14 +52,14 @@ class Ros2HyperdogPybulletNode(Node):
         self._motor_torque_limit = None
         self._robot_height_limit = None
         self._robot_euler_angle_limits = None
-        self._is_params_loaded = False
-        # ------------------ Pybullet Simulation -----------
-        self._dt = None
         self._sim_plane_id = None
         self._robot_urdf_id = None
+        # pybullet sim
+        self._pybullet_client = None
+        self._dt = None
         self._robot = None
         self._plane = None
-        self._pybullet_client = None
+        # userDebugParams Ids
         self._maxForceId = None
         self._heightId = None
         self._rollId = None
@@ -64,10 +67,13 @@ class Ros2HyperdogPybulletNode(Node):
         self._yawId = None
         self._moveXId = None
         self._moveYId = None
+        # flags
+        self._is_params_loaded = False
         self._is_pybullet_initialized = False
         self.is_pybullet_running = False
-        # ------------------- Node -------------------------
-        super().__init__('hyperdog_ros2_pybullet_node')
+        # Node 
+        self.node_name = 'hyperdog_ros2_pybullet_node'
+        super().__init__(self.node_name)
         self.logger = self.get_logger()
         self.declare_parameters(
             namespace='',
@@ -87,12 +93,17 @@ class Ros2HyperdogPybulletNode(Node):
                 ('ROBOT_EULER_ANGLE_LIMITS', None),
                 ])
         self._sub = self.create_subscription(Float64MultiArray, 'hyperdog_joint_positions', self.__sub_callback, 10)
-        self._joint_state_pub = self.create_publisher(Float64MultiArray, 'hyperdog_joint_position_feedback', 10)
-        self._joint_state_pub_timer = self.create_timer(timer_period_sec=0.005, callback=self.__joint_state_pub_callback)
-        self.update_params_timer = self.create_timer(1, self.__update_params)
-        self.pybullet_timer = self.create_timer(timer_period_sec=0.05, callback=self.__pybullet_sim_timer_callback)
+        self._joint_state_pub = self.create_publisher(Float64MultiArray, 'hyperdog_sim_joint_position_feedback', 10)
+        self._imu_pub = self.create_publisher(Imu, 'hyperdog_sim_imu', 10)
+        # self._joint_state_pub_timer = self.create_timer(timer_period_sec=0.005, callback=self.__joint_state_pub_callback)
+        self.update_params_timer = self.create_timer(1, self.__update_ros_params)
+        self.pybullet_timer = self.create_timer(timer_period_sec=0.05, callback=self.__pybullet_sim_timer_callback) 
+        self._user_debug_params_pub = None #self.create_publisher(PybulletUserDebugParams, 'hyperdog_sim_userdebug_params', 10)
+        # --------------------------------------------------
         self.target_joint_positions = Float64MultiArray()
         self.current_joint_positions = Float64MultiArray()
+        self.imu_ = Imu()
+        self.user_debug_params_ = PybulletUserDebugParams()
         # --------------------------------------------------
         
         
@@ -103,14 +114,7 @@ class Ros2HyperdogPybulletNode(Node):
         self.target_joint_positions.data = msg.data
         
 
-    def __joint_state_pub_callback(self):
-        if self.is_pybullet_running and len(self.current_joint_positions.data) == p.getNumJoints(self._robot) and self._joint_state_pub.get_subscription_count() != 0:
-            self._joint_state_pub.publish(self.current_joint_positions)
-
-            
-
-
-    def __update_params(self):
+    def __update_ros_params(self):
         try:
             dt_prev = self._dt
             self._is_debug = self.get_parameter('IS_DEBUG').get_parameter_value().bool_value
@@ -131,6 +135,10 @@ class Ros2HyperdogPybulletNode(Node):
             # ========= if pybullet simulation time step is changed, update the timer_period_sec of the pybullet timer =========
             if self._dt != dt_prev:
                 self.pybullet_timer.timer_period_ns = int(float(self._dt) * 1000 * 1000 * 1000)
+                self.logger.info(f"pybullet simulation timer is updated tp {self._dt}")
+            # if is_debug true, enable hyperdog_sim_userdebug_params publisher
+            if self._is_debug and self._user_debug_params_pub == None:
+                self._user_debug_params_pub = self.create_publisher(PybulletUserDebugParams, 'hyperdog_sim_userdebug_params', 10)
         except:
             self.logger.error("could not load parameters")
             # self._is_params_loaded = False
@@ -151,7 +159,12 @@ class Ros2HyperdogPybulletNode(Node):
             # ========= make is_pybullet_running flag True ==============
             self.is_pybullet_running = True
             # ========= update joint states =============================
-            self.update_joint_states()
+            self.get_joint_states()
+            # ========= publish ros2 topics =============================
+            if self._joint_state_pub.get_subscription_count() != 0:
+                self._joint_state_pub.publish(self.current_joint_positions)
+            if self._imu_pub.get_subscription_count() != 0:
+                self._imu_pub.publish(self.imu_)
             
             
     def __init_pybullet_sim(self):
@@ -169,32 +182,37 @@ class Ros2HyperdogPybulletNode(Node):
                 robot_urdf_path = os.path.join(get_package_share_directory(self._robot_urdf_id[0]), self._robot_urdf_id[1])
                 # self.logger.info(robot_urdf_path) # for debug
                 self._robot = p.loadURDF(robot_urdf_path, [0,0,0.008], [0,0,0,1], useFixedBase=False) # flags = urdfFlags
-                # ========= set the robot to home position =========
-                self.set_robot_home_position() 
-                # ========= print joint infos ======================
-                for j in range(p.getNumJoints(self._robot)):
-                    self.logger.info(f"[__init_pybullet_sim]: {p.getJointInfo(self._robot, j)}")
-                # ========= enable collision between lower legs ====
-                for l0 in self._calf_joint_ids:
-                    for l1 in self._calf_joint_ids:
-                        if(l1>l0):
-                            enableCollision = 1
-                            print("collision for pair", l0, l1, p.getJointInfo(self._robot, l0)[12], p.getJointInfo(self._robot,l1)[12], "enabled=", enableCollision)
-                            p.setCollisionFilterPair(self._robot, self._robot, 2,5,enableCollision)
-                # ========= set joint dynamics =====================
-                for j in range (p.getNumJoints(self._robot)):
-                    p.changeDynamics(self._robot, j, linearDamping=0, angularDamping=0) 
-                # ========= enable torque sensors ==================
-                [p.enableJointForceTorqueSensor(self._robot, i, True) for i in range(p.getNumJoints(self._robot))]     
-                # ========= set camera =============================
-                p.getCameraImage(480,320)               
-                # ========= set real-time simulation ===============
-                p.setRealTimeSimulation(0)               
-                # ========= set user debug parameters ==============
-                if self._is_debug:
-                    self.add_userDebugParams()
-                self._is_pybullet_initialized = True
-                self.logger.info("[__init_pybullet_sim]: HyperDog pybullet simulation is launched")
+                # check and set num of joints
+                if not self._num_of_joints == p.getNumJoints(self._robot):
+                    self.logger.error(f"robot's num of joints are not matched. \
+                                    expected num of joints {self._num_of_joints}, but got {p.gtNumJoints(self._robot)} ")
+                else:
+                    # ========= set the robot to home position =========
+                    self.set_robot_home_position() 
+                    # ========= print joint infos ======================
+                    # for j in range(self._num_of_joints):
+                    #     self.logger.info(f"[__init_pybullet_sim]: {p.getJointInfo(self._robot, j)}")
+                    # ========= enable collision between lower legs ====
+                    for l0 in self._calf_joint_ids:
+                        for l1 in self._calf_joint_ids:
+                            if(l1>l0):
+                                enableCollision = 1
+                                print("collision for pair", l0, l1, p.getJointInfo(self._robot, l0)[12], p.getJointInfo(self._robot,l1)[12], "enabled=", enableCollision)
+                                p.setCollisionFilterPair(self._robot, self._robot, 2,5,enableCollision)
+                    # ========= set joint dynamics =====================
+                    for j in range (self._num_of_joints):
+                        p.changeDynamics(self._robot, j, linearDamping=0, angularDamping=0) 
+                    # ========= enable torque sensors ==================
+                    [p.enableJointForceTorqueSensor(self._robot, i, True) for i in range(self._num_of_joints)]     
+                    # ========= set camera =============================
+                    p.getCameraImage(480,320)               
+                    # ========= set real-time simulation ===============
+                    p.setRealTimeSimulation(0)               
+                    # ========= set user debug parameters ==============
+                    if self._is_debug:
+                        self.add_userDebugParams()
+                    self._is_pybullet_initialized = True
+                    self.logger.info("[__init_pybullet_sim]: HyperDog pybullet simulation is successfully launched")
                 break
             else:
                 self.logger.info("waiting for parametes are loaded")
@@ -202,38 +220,56 @@ class Ros2HyperdogPybulletNode(Node):
             time.sleep(1)
 
     def set_robot_home_position(self):
-        torques = [self._max_motor_torque]*12
-        positions = [p for p in self._leg_joint_home_positions]*4
-        positions = [p*np.pi/180 for p in positions]
-        self.logger.info(f"[set_robot_home_position]: joint positions {positions}")
+        torques = [self._max_motor_torque]*self._num_of_joints
+        self.target_joint_positions.data = [p*np.pi/180 for p in self._leg_joint_home_positions]*4       
+        self.logger.info(f"[set_robot_home_position]: joint positions {self.target_joint_positions.data}")
         p.setJointMotorControlArray(self._robot, 
-                                    range(12), 
+                                    range(self._num_of_joints), 
                                     p.POSITION_CONTROL, 
-                                    targetPositions=positions,
+                                    targetPositions=self.target_joint_positions.data,
                                     forces=torques)
     
     def add_userDebugParams(self):
         self._maxForceId = p.addUserDebugParameter("maxForce", self._motor_torque_limit[0], self._motor_torque_limit[1], self._max_motor_torque)
-        # ---
         self._heightId = p.addUserDebugParameter("Height",      self._robot_height_limit[0],       self._robot_height_limit[1], self._robot_height_limit[0])
         self._rollId = p.addUserDebugParameter("roll",   -self._robot_euler_angle_limits[0], self._robot_euler_angle_limits[0], 0)
         self._pitchId = p.addUserDebugParameter("pitch", -self._robot_euler_angle_limits[1], self._robot_euler_angle_limits[1], 0)
         self._yawId = p.addUserDebugParameter("yaw",     -self._robot_euler_angle_limits[2], self._robot_euler_angle_limits[2], 0)
-        # ---
         self._moveXId = p.addUserDebugParameter('move_x', -150, 150, 0)
         self._moveYId = p.addUserDebugParameter('move_y', -150, 150, 0)
     
     def update_userDebugParams(self):
-        pass
-
-    def update_joint_states(self):
+        self.user_debug_params_.max_torque = p.readUserDebugParameter(self._maxForceId)
+        self.user_debug_params_.body_transformation.rotation.x = p.readUserDebugParameter(self._rollId)
+        self.user_debug_params_.body_transformation.rotation.y = p.readUserDebugParameter(self._pitchId)
+        self.user_debug_params_.body_transformation.rotation.z = p.readUserDebugParameter(self._yawId)
+        self.user_debug_params_.body_transformation.translation.x = p.readUserDebugParameter(self._moveXId)
+        self.user_debug_params_.body_transformation.translation.y = p.readUserDebugParameter(self._moveYId)
+        self.user_debug_params_.body_transformation.translation.z = p.readUserDebugParameter(self._heightId)
+        if self._is_debug and self._user_debug_params_pub != None:
+            self.user_debug_params_.header.stamp = self.get_clock().now().to_msg()
+            self._user_debug_params_pub.publish(self.user_debug_params_)
+            
+            
+    def get_joint_states(self):
         if self.is_pybullet_running:
-            joint_states = np.array(p.getJointStates(self._robot, [i for i in range(p.getNumJoints(self._robot))]))
+            joint_states = np.array(p.getJointStates(self._robot, [i for i in range(self._num_of_joints)]))
             joint_positions = list(joint_states[:,0])
             self.current_joint_positions.data = joint_positions
     
     def update_joint_positions(self):
-        pass #TODO
+        torque = self.user_debug_params_.max_torque  if self._is_debug else self._max_motor_torque
+        torques = [torque]*self._num_of_joints
+        positions = self.target_joint_positions.data
+        if len(positions) == self._num_of_joints:
+            p.setJointMotorControlArray(self._robot, 
+                                    range(self._num_of_joints), 
+                                    p.POSITION_CONTROL, 
+                                    targetPositions=self.target_joint_positions.data,
+                                    forces=torques)
+        
+
+            
         
         
 
