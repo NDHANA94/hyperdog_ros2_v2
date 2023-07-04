@@ -3,6 +3,7 @@
     # ---------------------------------
     min_height: 80    # mm 
     max_height: 300   # mm 
+    height_increment_gain: 5
     # ---------------------------------
     roll_limit: 45    # deg
     pitch_limit: 40   # deg
@@ -15,6 +16,7 @@
     # ---------------------------------
     max_step_length_x: 250    # mm
     max_step_length_y: 150    # mm
+    min_step_height: 20       # mm
     max_step_height: 220      # mm
     
   
