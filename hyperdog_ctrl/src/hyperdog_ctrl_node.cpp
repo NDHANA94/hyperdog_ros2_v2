@@ -14,6 +14,6 @@ int main(int argc, char ** argv)
   (void) argc;
   (void) argv;
 
-  printf("hello world hyperdog_ctrl package\n");
+  printf("hello world hyperdog_ctrl node\n");
   return 0;
 }

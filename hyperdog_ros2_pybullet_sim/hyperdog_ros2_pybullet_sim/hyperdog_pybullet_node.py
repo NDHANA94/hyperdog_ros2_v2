@@ -24,7 +24,7 @@ SOFTWARE.
 
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Float64MultiArray
+from std_msgs.msg import Float64MultiArray, Float32MultiArray
 from sensor_msgs.msg import Imu
 from hyperdogv2_msgs.msg import PybulletUserDebugParams
 from ament_index_python.packages import get_package_share_directory
@@ -97,16 +97,16 @@ class Ros2HyperdogPybulletNode(Node):
                 ('robot_height_limit', None),
                 ('robot_euler_angle_limit', None)
                 ])
-        self._sub = self.create_subscription(Float64MultiArray, 'hyperdog_joint_positions', self.__sub_callback, 10)
-        self._joint_state_pub = self.create_publisher(Float64MultiArray, 'hyperdog_sim_joint_position_feedback', 10)
+        self._sub = self.create_subscription(Float32MultiArray, 'hyperdog_jointController/commands', self.__sub_callback, 10)
+        self._joint_state_pub = self.create_publisher(Float32MultiArray, 'hyperdog_sim_joint_position_feedback', 10)
         self._imu_pub = self.create_publisher(Imu, 'hyperdog_sim_imu', 10)
         # self._joint_state_pub_timer = self.create_timer(timer_period_sec=0.005, callback=self.__joint_state_pub_callback)
         self.update_params_timer = self.create_timer(1, self.__update_ros_params)
-        self.pybullet_timer = self.create_timer(timer_period_sec=0.05, callback=self.__pybullet_sim_timer_callback) 
+        self.pybullet_timer = self.create_timer(timer_period_sec=0.001, callback=self.__pybullet_sim_timer_callback) 
         self._user_debug_params_pub = None #self.create_publisher(PybulletUserDebugParams, 'hyperdog_sim_userdebug_params', 10)
         # --------------------------------------------------
-        self.target_joint_positions = Float64MultiArray()
-        self.current_joint_positions = Float64MultiArray()
+        self.target_joint_positions = Float32MultiArray()
+        self.current_joint_positions = Float32MultiArray()
         self.imu_ = Imu()
         self.user_debug_params_ = PybulletUserDebugParams()
         # --------------------------------------------------
@@ -115,8 +115,9 @@ class Ros2HyperdogPybulletNode(Node):
         
         # self.timer
 
-    def __sub_callback(self, msg:Float64MultiArray):
-        self.target_joint_positions.data = msg.data
+    def __sub_callback(self, msg:Float32MultiArray):
+        if len (msg.data) == self._num_of_joints:
+            self.target_joint_positions.data = [msg.data[i]*np.pi/180 for i in range(12)]
         
 
     def __update_ros_params(self):

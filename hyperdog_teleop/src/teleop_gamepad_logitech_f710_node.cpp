@@ -168,6 +168,7 @@ class HyperdogTeleopF710 : public rclcpp::Node
       // create a subscriber to joy_node
       joy_subscriber_ = this->create_subscription<sensor_msgs::msg::Joy>("joy", 10, std::bind(&HyperdogTeleopF710::joy_subscriber_callback, this, std::placeholders::_1));
       teleop_joy_publisher_ = this->create_publisher<hyperdogv2_msgs::msg::JoyCtrlCmds>("hyperdog_joy_teleop_cmds", 10);
+      
     }
 
     // Destructor
@@ -175,14 +176,6 @@ class HyperdogTeleopF710 : public rclcpp::Node
       RCLCPP_INFO(this->get_logger(), "closing teleop node");
     }
 
-
-    
-
-    
-
-    
-
-  
 };
 
 
@@ -190,7 +183,7 @@ int main(int argc, char ** argv)
 {
   // (void) argc;
   // (void) argv;
-  printf("hello world hyperdog_teleop package\n");
+  printf("starting hyperdog_teleop package...\n");
   rclcpp::init(argc, argv);
   auto teleop_node = std::make_shared<HyperdogTeleopF710>();
   rclcpp::spin(teleop_node);

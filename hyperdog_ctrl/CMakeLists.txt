@@ -16,24 +16,48 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 # find dependencies
+find_package(rclcpp REQUIRED)
 find_package(ament_cmake REQUIRED)
 find_package(hyperdogv2_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 add_executable(hyperdog_ctrl_node src/hyperdog_ctrl_node.cpp)
+add_executable(hyperdog_ik_node src/hyperdog_ik_node.cpp)
+
 target_include_directories(hyperdog_ctrl_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 ament_target_dependencies(
-  hyperdog_ctrl_node
+  hyperdog_ctrl_node 
+  "rclcpp"
   "hyperdogv2_msgs"
   "std_msgs"
   "sensor_msgs"
 )
 
-install(TARGETS hyperdog_ctrl_node
+target_include_directories(hyperdog_ik_node PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+ament_target_dependencies(
+  hyperdog_ik_node 
+  "rclcpp"
+  "hyperdogv2_msgs"
+  "std_msgs"
+  "geometry_msgs"
+)
+
+install(TARGETS hyperdog_ctrl_node hyperdog_ik_node
   DESTINATION lib/${PROJECT_NAME})
+
+include_directories(./include/)
+
+install(DIRECTORY
+  src
+  launch
+  DESTINATION share/${PROJECT_NAME}
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

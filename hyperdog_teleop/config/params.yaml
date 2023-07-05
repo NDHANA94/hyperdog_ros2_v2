@@ -5,7 +5,7 @@
     max_height: 300   # mm 
     height_increment_gain: 5
     # ---------------------------------
-    roll_limit: 45    # deg
+    roll_limit: 60    # deg
     pitch_limit: 40   # deg
     yaw_limit: 50     # deg
     # ---------------------------------
