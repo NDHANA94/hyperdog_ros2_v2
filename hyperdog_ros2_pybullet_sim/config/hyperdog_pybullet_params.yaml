@@ -1,23 +1,24 @@
 hyperdog_ros2_pybullet_node:
   ros__parameters:
     # ----------------------------------------------------------
-    IS_DEBUG: True
+    is_debug: True
     # ----------------------------------------------------------
-    NUM_OF_JOINTS: 12
-    HIP_JOINT_IDS: [0, 3, 6, 9]
-    THIGH_JOINT_IDS: [1, 4, 7, 10]
-    CALF_JOINT_IDS: [2, 5, 8, 11]
+    num_of_motors: 12
+    hip_joint_ids: [0, 3, 6, 9]
+    thigh_joint_ids: [1, 4, 7, 10]
+    calf_joint_ids: [2, 5, 8, 11]
     # ----------------------------------------------------------
-    LEG_JOINT_HOME_POSITIONS: [0, 0, 30]
+    leg_joint_home_positions: [0, 0, 30]
     # ----------------------------------------------------------
-    MAX_MOTOR_TORQUE: 7.0 # Nm, double
+    max_motor_torque: 7.0 # Nm, double
     # ----------------------------------------------------------
-    SIM_STEP_TIME: 0.001     # 
-    SIM_PLANE: "plane.urdf"
-    ROBOT_URDF: ["hyperdog_robot_description","urdf/hyperdog.urdf"] # [pkg_name, directory_of the_file_in_the_pkg]
+    sim_step_time: 0.001     # 
+    realtime_sim: True
+    sim_plane: "plane.urdf"
+    robot_urdf_path: ["hyperdog_robot_description","urdf/hyperdog.urdf"] # [pkg_name, directory_of the_file_in_the_pkg]
     # ----------------------------------------------------------
     # user debug parameters
-    MOTOR_TORQUE_LIMIT: [0.0, 20.0]     # Nm, doubles
-    ROBOT_HEIGHT_LIMIT: [80.0, 300.0]   # mm, doubles
-    ROBOT_EULER_ANGLE_LIMITS: [60.0, 45.0, 50.0]  # [roll(deg), pitch(deg), yaw(yaw)], doubles
+    motor_torque_limit: [0.0, 20.0]     # Nm, doubles
+    robot_height_limit: [80.0, 300.0]   # mm, doubles
+    robot_euler_angle_limit: [60.0, 45.0, 50.0]  # [roll(deg), pitch(deg), yaw(yaw)], doubles
 

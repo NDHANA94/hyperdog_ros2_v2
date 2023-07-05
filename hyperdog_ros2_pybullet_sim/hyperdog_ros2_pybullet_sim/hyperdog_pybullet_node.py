@@ -68,9 +68,13 @@ class Ros2HyperdogPybulletNode(Node):
         self._moveXId = None
         self._moveYId = None
         # flags
+        self._is_realtime_sim = True
         self._is_params_loaded = False
         self._is_pybullet_initialized = False
         self.is_pybullet_running = False
+        # for Imu
+        self.base_last_measured_linear_vel = None
+        self.imu_last_measured_time = None
         # Node 
         self.node_name = 'hyperdog_ros2_pybullet_node'
         super().__init__(self.node_name)
@@ -78,19 +82,20 @@ class Ros2HyperdogPybulletNode(Node):
         self.declare_parameters(
             namespace='',
             parameters=[
-                ('IS_DEBUG', None),
-                ('NUM_OF_JOINTS', None),
-                ('HIP_JOINT_IDS', None),
-                ('THIGH_JOINT_IDS', None),
-                ('CALF_JOINT_IDS', None),
-                ('LEG_JOINT_HOME_POSITIONS', None),
-                ('MAX_MOTOR_TORQUE', None),
-                ('SIM_STEP_TIME', None),
-                ('SIM_PLANE', None),
-                ('ROBOT_URDF', None),
-                ('MOTOR_TORQUE_LIMIT', None),
-                ('ROBOT_HEIGHT_LIMIT', None),
-                ('ROBOT_EULER_ANGLE_LIMITS', None),
+                ('is_debug', None),
+                ('num_of_motors', None),
+                ('hip_joint_ids', None),
+                ('thigh_joint_ids', None),
+                ('calf_joint_ids', None),
+                ('leg_joint_home_positions', None),
+                ('max_motor_torque', None),
+                ('sim_step_time', None),
+                ('realtime_sim', None),
+                ('sim_plane', None),
+                ('robot_urdf_path', None),
+                ('motor_torque_limit', None),
+                ('robot_height_limit', None),
+                ('robot_euler_angle_limit', None)
                 ])
         self._sub = self.create_subscription(Float64MultiArray, 'hyperdog_joint_positions', self.__sub_callback, 10)
         self._joint_state_pub = self.create_publisher(Float64MultiArray, 'hyperdog_sim_joint_position_feedback', 10)
@@ -117,19 +122,20 @@ class Ros2HyperdogPybulletNode(Node):
     def __update_ros_params(self):
         try:
             dt_prev = self._dt
-            self._is_debug = self.get_parameter('IS_DEBUG').get_parameter_value().bool_value
-            self._num_of_joints = self.get_parameter('NUM_OF_JOINTS').get_parameter_value().integer_value
-            self._hip_joint_ids = self.get_parameter('HIP_JOINT_IDS').get_parameter_value().integer_array_value
-            self._thigh_joint_ids = self.get_parameter('THIGH_JOINT_IDS').get_parameter_value().integer_array_value
-            self._calf_joint_ids = self.get_parameter('CALF_JOINT_IDS').get_parameter_value().integer_array_value
-            self._leg_joint_home_positions = self.get_parameter('LEG_JOINT_HOME_POSITIONS').get_parameter_value().integer_array_value
-            self._max_motor_torque = self.get_parameter('MAX_MOTOR_TORQUE').get_parameter_value().double_value
-            self._dt = self.get_parameter('SIM_STEP_TIME').get_parameter_value().double_value
-            self._sim_plane_id = self.get_parameter('SIM_PLANE').get_parameter_value().string_value
-            self._robot_urdf_id = self.get_parameter('ROBOT_URDF').get_parameter_value().string_array_value
-            self._motor_torque_limit = self.get_parameter('MOTOR_TORQUE_LIMIT').get_parameter_value().double_array_value
-            self._robot_height_limit = self.get_parameter('ROBOT_HEIGHT_LIMIT').get_parameter_value().double_array_value
-            self._robot_euler_angle_limits = self.get_parameter('ROBOT_EULER_ANGLE_LIMITS').get_parameter_value().double_array_value
+            self._is_debug = self.get_parameter('is_debug').get_parameter_value().bool_value
+            self._num_of_joints = self.get_parameter('num_of_motors').get_parameter_value().integer_value
+            self._hip_joint_ids = self.get_parameter('hip_joint_ids').get_parameter_value().integer_array_value
+            self._thigh_joint_ids = self.get_parameter('thigh_joint_ids').get_parameter_value().integer_array_value
+            self._calf_joint_ids = self.get_parameter('calf_joint_ids').get_parameter_value().integer_array_value
+            self._leg_joint_home_positions = self.get_parameter('leg_joint_home_positions').get_parameter_value().integer_array_value
+            self._max_motor_torque = self.get_parameter('max_motor_torque').get_parameter_value().double_value
+            self._dt = self.get_parameter('sim_step_time').get_parameter_value().double_value
+            self._is_realtime_sim = self.get_parameter('realtime_sim').get_parameter_value().bool_value
+            self._sim_plane_id = self.get_parameter('sim_plane').get_parameter_value().string_value
+            self._robot_urdf_id = self.get_parameter('robot_urdf_path').get_parameter_value().string_array_value
+            self._motor_torque_limit = self.get_parameter('motor_torque_limit').get_parameter_value().double_array_value
+            self._robot_height_limit = self.get_parameter('robot_height_limit').get_parameter_value().double_array_value
+            self._robot_euler_angle_limits = self.get_parameter('robot_euler_angle_limit').get_parameter_value().double_array_value
             self._is_params_loaded = True
             # self.logger.info("[__update_params]: parametes are loaded") # for debug
             # ========= if pybullet simulation time step is changed, update the timer_period_sec of the pybullet timer =========
@@ -151,20 +157,19 @@ class Ros2HyperdogPybulletNode(Node):
         # ========= else, run the simulation ============================
         else:
             if self._is_debug:
-                self.update_userDebugParams()
+                self.update_userDebugParams(publish=False)
             # ========= update joint positions ==========================
-            self.update_joint_positions()
+            self.set_joint_positions()
             # ========= make one step of simulation per on time beat of the timer =========
             p.stepSimulation()
             # ========= make is_pybullet_running flag True ==============
             self.is_pybullet_running = True
             # ========= update joint states =============================
-            self.get_joint_states()
+            self.read_joint_states()
             # ========= publish ros2 topics =============================
             if self._joint_state_pub.get_subscription_count() != 0:
                 self._joint_state_pub.publish(self.current_joint_positions)
-            if self._imu_pub.get_subscription_count() != 0:
-                self._imu_pub.publish(self.imu_)
+            self.publish_imu()
             
             
     def __init_pybullet_sim(self):
@@ -207,10 +212,10 @@ class Ros2HyperdogPybulletNode(Node):
                     # ========= set camera =============================
                     p.getCameraImage(480,320)               
                     # ========= set real-time simulation ===============
-                    p.setRealTimeSimulation(0)               
+                    p.setRealTimeSimulation(self._is_realtime_sim)               
                     # ========= set user debug parameters ==============
                     if self._is_debug:
-                        self.add_userDebugParams()
+                        self.declare_userDebugParameters()
                     self._is_pybullet_initialized = True
                     self.logger.info("[__init_pybullet_sim]: HyperDog pybullet simulation is successfully launched")
                 break
@@ -229,7 +234,7 @@ class Ros2HyperdogPybulletNode(Node):
                                     targetPositions=self.target_joint_positions.data,
                                     forces=torques)
     
-    def add_userDebugParams(self):
+    def declare_userDebugParameters(self):
         self._maxForceId = p.addUserDebugParameter("maxForce", self._motor_torque_limit[0], self._motor_torque_limit[1], self._max_motor_torque)
         self._heightId = p.addUserDebugParameter("Height",      self._robot_height_limit[0],       self._robot_height_limit[1], self._robot_height_limit[0])
         self._rollId = p.addUserDebugParameter("roll",   -self._robot_euler_angle_limits[0], self._robot_euler_angle_limits[0], 0)
@@ -238,7 +243,7 @@ class Ros2HyperdogPybulletNode(Node):
         self._moveXId = p.addUserDebugParameter('move_x', -150, 150, 0)
         self._moveYId = p.addUserDebugParameter('move_y', -150, 150, 0)
     
-    def update_userDebugParams(self):
+    def update_userDebugParams(self, publish=False):
         self.user_debug_params_.max_torque = p.readUserDebugParameter(self._maxForceId)
         self.user_debug_params_.body_transformation.rotation.x = p.readUserDebugParameter(self._rollId)
         self.user_debug_params_.body_transformation.rotation.y = p.readUserDebugParameter(self._pitchId)
@@ -246,21 +251,26 @@ class Ros2HyperdogPybulletNode(Node):
         self.user_debug_params_.body_transformation.translation.x = p.readUserDebugParameter(self._moveXId)
         self.user_debug_params_.body_transformation.translation.y = p.readUserDebugParameter(self._moveYId)
         self.user_debug_params_.body_transformation.translation.z = p.readUserDebugParameter(self._heightId)
-        if self._is_debug and self._user_debug_params_pub != None:
+        if publish and self._is_debug and self._user_debug_params_pub != None:
             self.user_debug_params_.header.stamp = self.get_clock().now().to_msg()
             self._user_debug_params_pub.publish(self.user_debug_params_)
             
             
-    def get_joint_states(self):
+    def read_joint_states(self):
+        """Read joint states of the robot in simulation"""
         if self.is_pybullet_running:
             joint_states = np.array(p.getJointStates(self._robot, [i for i in range(self._num_of_joints)]))
             joint_positions = list(joint_states[:,0])
             self.current_joint_positions.data = joint_positions
     
-    def update_joint_positions(self):
+    def set_joint_positions(self, target_position=None):
+        """Set robot's joint positions to self.target_joint_positions.data, if taget_position of the function not provided."""
         torque = self.user_debug_params_.max_torque  if self._is_debug else self._max_motor_torque
         torques = [torque]*self._num_of_joints
-        positions = self.target_joint_positions.data
+        if target_position == None:
+            positions = self.target_joint_positions.data
+        elif len(target_position) == self._num_of_joints:
+            positions = target_position
         if len(positions) == self._num_of_joints:
             p.setJointMotorControlArray(self._robot, 
                                     range(self._num_of_joints), 
@@ -268,11 +278,33 @@ class Ros2HyperdogPybulletNode(Node):
                                     targetPositions=self.target_joint_positions.data,
                                     forces=torques)
         
-
+    def publish_imu(self):
+        if self._imu_pub.get_subscription_count() != 0:
+            _, base_orientation = p.getBasePositionAndOrientation(self._robot) 
+            base_linear_velocity , base_angular_velocity = p.getBaseVelocity(self._robot)
+            measured_time = time.time_ns()
+            # base_orientation_cov = None
+            # base_angular_velocity_cov = None
+            # base_linear_acceleration_cov = None
+            self.imu_.header.stamp = self.get_clock().now().to_msg()
+            if self.imu_last_measured_time == None:
+                self.base_last_measured_linear_vel =  base_linear_velocity
+                self.imu_last_measured_time = measured_time
+            else:
+                dt = (time.time_ns() - self.imu_last_measured_time)/(1000*1000*1000)
+                linear_acceleration = [(base_linear_velocity[i] - self.base_last_measured_linear_vel[i])/dt for i in range(3)]
+                self.imu_.linear_acceleration.x = linear_acceleration[0]
+                self.imu_.linear_acceleration.y = linear_acceleration[1]
+                self.imu_.linear_acceleration.z = linear_acceleration[2]
+                self.imu_.orientation.x = base_orientation[0]
+                self.imu_.orientation.y = base_orientation[1]
+                self.imu_.orientation.z = base_orientation[2]
+                self.imu_.orientation.w = base_orientation[3]
+                self.imu_.angular_velocity.x = base_angular_velocity[0]
+                self.imu_.angular_velocity.y = base_angular_velocity[1]
+                self.imu_.angular_velocity.z = base_angular_velocity[2]
+                self._imu_pub.publish(self.imu_)
             
-        
-        
-
 
 def main(args=None):
     rclpy.init(args=args)
