@@ -20,7 +20,7 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='nipun',
+    maintainer='W M Nipun Dhananjaya',
     maintainer_email='nipun.dhananjaya@gmail.com',
     description='TODO: Package description',
     license='TODO: License declaration',

@@ -139,7 +139,7 @@ class Ros2HyperdogPybulletNode(Node):
             self._robot_euler_angle_limits = self.get_parameter('robot_euler_angle_limit').get_parameter_value().double_array_value
             self._is_params_loaded = True
             # self.logger.info("[__update_params]: parametes are loaded") # for debug
-            # ========= if pybullet simulation time step is changed, update the timer_period_sec of the pybullet timer =========
+            # --------- if pybullet simulation time step is changed, update the timer_period_sec of the pybullet timer ---------
             if self._dt != dt_prev:
                 self.pybullet_timer.timer_period_ns = int(float(self._dt) * 1000 * 1000 * 1000)
                 self.logger.info(f"pybullet simulation timer is updated tp {self._dt}")
@@ -151,30 +151,30 @@ class Ros2HyperdogPybulletNode(Node):
             # self._is_params_loaded = False
 
     def __pybullet_sim_timer_callback(self):
-        # ========= if pybullet is not initialized, initiate it =========
+        # --------- if pybullet is not initialized, initiate it ---------
         if not self._is_pybullet_initialized:
             self.is_pybullet_running = False
             self.__init_pybullet_sim()
-        # ========= else, run the simulation ============================
+        # --------- else, run the simulation ----------------------------
         else:
             if self._is_debug:
                 self.update_userDebugParams(publish=False)
-            # ========= update joint positions ==========================
+            # --------- update joint positions -------------------------
             self.set_joint_positions()
-            # ========= make one step of simulation per on time beat of the timer =========
+            # --------- make one step of simulation per on time beat of the timer ---------
             p.stepSimulation()
-            # ========= make is_pybullet_running flag True ==============
+            # --------- make is_pybullet_running flag True --------------
             self.is_pybullet_running = True
-            # ========= update joint states =============================
+            # --------- update joint states -----------------------------
             self.read_joint_states()
-            # ========= publish ros2 topics =============================
+            # --------- publish ros2 topics -----------------------------
             if self._joint_state_pub.get_subscription_count() != 0:
                 self._joint_state_pub.publish(self.current_joint_positions)
             self.publish_imu()
             
             
     def __init_pybullet_sim(self):
-        # ========= wait untill the parameters are loaded =========
+        # --------- wait untill the parameters are loaded ---------
         self.logger.info("[__init_pybullet_sim]: Initializing hyperdog pybullet simulation")
         while 1:
             self.update_params_timer.callback()
@@ -193,28 +193,26 @@ class Ros2HyperdogPybulletNode(Node):
                     self.logger.error(f"robot's num of joints are not matched. \
                                     expected num of joints {self._num_of_joints}, but got {p.gtNumJoints(self._robot)} ")
                 else:
-                    # ========= set the robot to home position =========
                     self.set_robot_home_position() 
-                    # ========= print joint infos ======================
                     # for j in range(self._num_of_joints):
                     #     self.logger.info(f"[__init_pybullet_sim]: {p.getJointInfo(self._robot, j)}")
-                    # ========= enable collision between lower legs ====
+                    # -------- enable collision between lower legs ------
                     for l0 in self._calf_joint_ids:
                         for l1 in self._calf_joint_ids:
                             if(l1>l0):
                                 enableCollision = 1
                                 print("collision for pair", l0, l1, p.getJointInfo(self._robot, l0)[12], p.getJointInfo(self._robot,l1)[12], "enabled=", enableCollision)
                                 p.setCollisionFilterPair(self._robot, self._robot, 2,5,enableCollision)
-                    # ========= set joint dynamics =====================
+                    # --------- set joint dynamics --------------------
                     for j in range (self._num_of_joints):
                         p.changeDynamics(self._robot, j, linearDamping=0, angularDamping=0) 
-                    # ========= enable torque sensors ==================
+                    # --------- enable torque sensors ------------------
                     [p.enableJointForceTorqueSensor(self._robot, i, True) for i in range(self._num_of_joints)]     
-                    # ========= set camera =============================
+                    # --------- set camera -----------------------------
                     p.getCameraImage(480,320)               
-                    # ========= set real-time simulation ===============
+                    # --------- set real-time simulation ---------------
                     p.setRealTimeSimulation(self._is_realtime_sim)               
-                    # ========= set user debug parameters ==============
+                    # --------- set user debug parameters -------------
                     if self._is_debug:
                         self.declare_userDebugParameters()
                     self._is_pybullet_initialized = True

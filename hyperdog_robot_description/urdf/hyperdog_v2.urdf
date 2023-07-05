@@ -80,22 +80,22 @@ SOFTWARE.
 <!-- base link -->
 <link name="base_link">
     <visual>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <origin xyz="0.01 0 0" rpy="0 0 0"/>
         <geometry>
-            <mesh filename="../meshes/hyperdog_v2/body.stl" scale="0.001 0.001 0.001"/>
+            <mesh filename="../meshes/hyperdog_v2/BodyV2.stl" scale="0.001 0.001 0.001"/>
         </geometry>
         <material name="silver"/>
     </visual>
     <collision>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <origin xyz="0.01 0 0" rpy="0 0 0"/>
         <geometry>
-            <mesh filename="../meshes/hyperdog_v2/body.stl" scale="0.001 0.001 0.001"/>
+            <mesh filename="../meshes/hyperdog_v2/BodyV2.stl" scale="0.001 0.001 0.001"/>
         </geometry>
     </collision>
     <inertial>
         <origin xyz="-0.006 0.00633 0.00214" rpy="0 0 0"/> 
-        <mass value="3"/>
-        <inertia  ixx="0.011396658109874464" ixy="0" ixz="0" iyy="0.05486450023370329" iyz="0" izz="0.06098759357764758" />   
+        <mass value="5"/>
+        <inertia  ixx="0.023073972632641666" ixy="0" ixz="0" iyy="0.13216888452108055" iyz="0" izz="0.13771657321140324"/>   
     </inertial>
 </link>
 
@@ -368,7 +368,7 @@ SOFTWARE.
 <!-- *********  FR_hip  JOINT ********* -->
 <joint name="FR_hip_joint" type="revolute">
     <axis xyz="-1 0 0" rpy="0 0 0"/>
-    <origin xyz="0.175 -0.066 0" rpy="0 0 0"/>
+    <origin xyz="0.19575 -0.066 0" rpy="0 0 0"/>
     <parent link="base_link"/>
     <child link="FR_hip_link"/>
     <limit lower="-1.57" upper="1.57" velocity="7" effort="8"/>
@@ -378,7 +378,7 @@ SOFTWARE.
 <!-- *********  FL_hip JOINT ********* -->
 <joint name="FL_hip_joint" type="revolute">
     <axis xyz="1 0 0"/>
-    <origin xyz="0.175 0.066 0" rpy="0 0 0"/>
+    <origin xyz="0.19575 0.066 0" rpy="0 0 0"/>
     <parent link="base_link"/>
     <child link="FL_hip_link"/>
     <limit lower="-1.57" upper="1.57" velocity="7" effort="8"/>
@@ -388,7 +388,7 @@ SOFTWARE.
 <!-- *********  BR_hip JOINT ********* -->
 <joint name="BR_hip_joint" type="revolute">
     <axis xyz="-1 0 0"/>
-    <origin xyz="-0.175 -0.066 0" rpy="0 0 0"/>
+    <origin xyz="-0.19575 -0.066 0" rpy="0 0 0"/>
     <parent link="base_link"/>
     <child link="BR_hip_link"/>
     <limit lower="-1.57" upper="1.57" velocity="7" effort="8"/>
@@ -398,7 +398,7 @@ SOFTWARE.
 <!-- *********  BL_hip JOINT ********* -->
 <joint name="BL_hip_joint" type="revolute">
     <axis xyz="1 0 0"/>
-    <origin xyz="-0.175 0.066 0" rpy="0 0 0"/>
+    <origin xyz="-0.19575 0.066 0" rpy="0 0 0"/>
     <parent link="base_link"/>
     <child link="BL_hip_link"/>
     <limit lower="-1.57" upper="1.57" velocity="7" effort="8"/>
