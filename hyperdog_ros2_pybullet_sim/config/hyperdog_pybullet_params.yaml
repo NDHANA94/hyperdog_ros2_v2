@@ -15,7 +15,7 @@ hyperdog_ros2_pybullet_node:
     sim_step_time: 0.001     # 
     realtime_sim: True
     sim_plane: "plane.urdf"
-    robot_urdf_path: ["hyperdog_robot_description","urdf/hyperdog.urdf"] # [pkg_name, directory_of the_file_in_the_pkg]
+    robot_urdf_path: ["hyperdog_robot_description","urdf/hyperdog_v1.urdf"] # [pkg_name, directory_of the_file_in_the_pkg]
     # ----------------------------------------------------------
     # user debug parameters
     motor_torque_limit: [0.0, 20.0]     # Nm, doubles

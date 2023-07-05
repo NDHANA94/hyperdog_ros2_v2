@@ -15,7 +15,8 @@ setup(
         (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
         (os.path.join('share', package_name, 'config'), glob('config/*.yaml')),
         (os.path.join('share', package_name, 'urdf'), glob('urdf/*.urdf')),
-        (os.path.join('share', package_name, 'meshes'), glob('meshes/*.stl'))
+        (os.path.join('share', package_name, 'meshes/hyperdog_v1'), glob('meshes/hyperdog_v1/*.stl')),
+        (os.path.join('share', package_name, 'meshes/hyperdog_v2'), glob('meshes/hyperdog_v2/*.stl'))
     ],
     install_requires=['setuptools'],
     zip_safe=True,

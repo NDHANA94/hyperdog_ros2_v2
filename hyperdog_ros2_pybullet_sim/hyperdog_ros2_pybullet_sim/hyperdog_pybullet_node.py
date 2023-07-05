@@ -186,7 +186,7 @@ class Ros2HyperdogPybulletNode(Node):
                 p.setTimeStep(self._dt)
                 urdfFlags = p.URDF_USE_SELF_COLLISION
                 robot_urdf_path = os.path.join(get_package_share_directory(self._robot_urdf_id[0]), self._robot_urdf_id[1])
-                # self.logger.info(robot_urdf_path) # for debug
+                self.logger.info(robot_urdf_path) # for debug
                 self._robot = p.loadURDF(robot_urdf_path, [0,0,0.008], [0,0,0,1], useFixedBase=False) # flags = urdfFlags
                 # check and set num of joints
                 if not self._num_of_joints == p.getNumJoints(self._robot):

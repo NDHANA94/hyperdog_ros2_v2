@@ -32,6 +32,7 @@
   <depend>rclpy</depend>
   <depend>std_msgs</depend>
   <depend>hyperdog_robot_description</depend>
+  <depend>hyperdogv2_msgs</depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
