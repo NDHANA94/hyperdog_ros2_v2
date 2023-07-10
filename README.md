@@ -2,7 +2,8 @@
 HyperDog quadruped robot's updated ros2 pkgs with pybullet simulation
 
 
-D
+Pybullet simulation works, but more to develop.
+
 
 TODO:
   - hyperdog_ctrl pkg
