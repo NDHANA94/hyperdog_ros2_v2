@@ -16,6 +16,12 @@
     roll_limit: 60        # [deg]
     pitch_limit: 45       # [deg]
     yaw_limit: 50         # [deg]
+    # --------------------------------------
+    fr_joint_directions: [-1, 1, 1]    # 1 cw, -1ccw
+    fl_joint_directions: [1, 1, 1]     # 1 cw, -1ccw
+    br_joint_directions: [-1, 1, 1]    # 1 cw, -1ccw
+    bl_joint_directions: [1, 1, 1]     # 1 cw, -1ccw
+
 
 
 

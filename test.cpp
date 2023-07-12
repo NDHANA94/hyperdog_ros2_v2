@@ -8,6 +8,8 @@ Write your code in this editor and press "Run" button to compile and execute it.
 
 #include <iostream>
 #include <tgmath.h>
+#include <vector>
+// #include <std.h>
 // #include "rclcpp/rclcpp.hpp"
 
 #define L1 104
@@ -84,6 +86,12 @@ int main()
 
     // ------------------------------
     cout<<"---------------------------\n";
+    float a = -1.2345;
+    int dir = -1;
+    float b = dir*a;
+    for(int i = 0; i<3; i++){
+        cout<<b<<endl;
+    }
     // float32 x = 1.09234;
 
     // printf("%d", {1.0, 2.0, 3.834});
