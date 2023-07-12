@@ -8,6 +8,7 @@ Write your code in this editor and press "Run" button to compile and execute it.
 
 #include <iostream>
 #include <tgmath.h>
+// #include "rclcpp/rclcpp.hpp"
 
 #define L1 104
 #define L2 150
@@ -19,6 +20,9 @@ Write your code in this editor and press "Run" button to compile and execute it.
 
 using namespace std;
 
+double* joint_angs = new double[3];
+bool is_valid = false;
+
 class Point{
     public:
         float x;
@@ -27,28 +31,61 @@ class Point{
 };
 
 float* ik(Point p){
-    bool is_any_nan = false;
-    float* joint_angles = new float[3];
-    float a, D, th0, th1, th2_1, th2_2;
-    
-    a = sqrt(pow(p.x,2) + pow(p.y,2) - pow(L1, 2));
-    D = (pow(a,2) + pow(p.z,2) - pow(L2,2) - pow(L3,2)) / (2*L2*L3);
-    th2_1 = atan2f(-sqrt(1-pow(D,2)), D);
-    th2_2 = atan2f(sqrt(1-pow(D,2)), D);
+    float* joint_angles_ = new float[3];
+    float r_yz_ = sqrtf(powf(p.y,2) + powf(p.z,2));
+    float sin_th1_plus_alpha_ = L1/r_yz_;
+    float cos_th1_plus_alpha_ = sqrtf(1 - powf(sin_th1_plus_alpha_,2));
+    joint_angles_[0] = atan2f(sin_th1_plus_alpha_, cos_th1_plus_alpha_) - atan2f(p.y, -p.z);
+    // ---
+    float cos_th3_ = (powf(p.x,2) + powf(p.y,2) + powf(p.z,2) - powf(L1,2) - powf(L2,2) - powf(L3,2))\
+                    /(2*L2*L3);
+    float sin_th3_ = sqrtf(1 - powf(cos_th3_,2));
+    joint_angles_[2] = atan2f(sin_th3_, cos_th3_);
+    // ---
+    float a_ = L3*sinf(joint_angles_[2]);
+    float b_ = L2 + L3*cosf(joint_angles_[2]);
+    float c_ = sqrtf(powf(a_,2) + powf(b_,2));
+    float beta_ = atan2f(b_, a_);
+    float sin_th2_minus_beta_ = p.x/c_;
+    float cos_th2_minus_beta_ = sqrtf(1 - powf(p.x/c_, 2));
+    float th2_minus_beta_ = atan2f(sin_th2_minus_beta_, cos_th2_minus_beta_);
+    joint_angles_[1] = th2_minus_beta_ + beta_;
+    return joint_angles_;
+}
 
-    joint_angles[0] = atan2f(-p.y, p.x) - atan2f(a, -L1);
-    joint_angles[2] = th2_2; // or th2_2 of other configuration
-    joint_angles[1] = atan2f(p.z, a) - atan2f(L3*sin(joint_angles[2]), L2 + L3*cos(joint_angles[2]));
-
-    return joint_angles;
+bool update_joint_angs(Point p){
+    float* j_angs = ik(p);
+    for(int i = 0; i<3; i++){
+        cout<<j_angs[i]<<endl;
+        if(!isnan(j_angs[i])){
+            joint_angs[i] = j_angs[i];
+            is_valid = true;
+        }
+        else{
+            is_valid = false;
+            return 0;
+            break;
+        }
+    }
+    return 1;
 }
 
 int main()
 {   Point p;
-    p.x = 104;
-    p.y = 80;
-    p.z = 0;
-    float* joint_angles = ik(p);
-    cout<<"joint angles:  "<< joint_angles[0] << ", " << joint_angles[1]<< ", "<< joint_angles[2] << endl;
+    p.x = 10;
+    p.y = 104;
+    p.z = -200;
+    is_valid = update_joint_angs(p);
+    cout<<"is valid: "<<is_valid<<endl;
+    for(int i=0; i<3; i++){
+        cout<<joint_angs[i] << ", ";
+    }
+    cout<<endl;
+
+    // ------------------------------
+    cout<<"---------------------------\n";
+    // float32 x = 1.09234;
+
+    // printf("%d", {1.0, 2.0, 3.834});
     return 0;
 }
