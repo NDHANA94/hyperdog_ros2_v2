@@ -189,7 +189,6 @@ private:
                 RCLCPP_INFO(this->get_logger(), "BL leg desired position (%f, %f, %f) is out of range\n", msg->bl.x, msg->bl.y, msg->bl.z);
             }
         }
-        
     }
 
     
