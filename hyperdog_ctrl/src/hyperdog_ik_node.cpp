@@ -12,8 +12,6 @@
 
 using namespace std::chrono_literals;
 
-
-
 auto joint_positions_ = hyperdogv2_msgs::msg::JointPositions();
 auto previous_joint_positions_ = hyperdogv2_msgs::msg::JointPositions();
 auto foot_positions_ = hyperdogv2_msgs::msg::FootPositions();

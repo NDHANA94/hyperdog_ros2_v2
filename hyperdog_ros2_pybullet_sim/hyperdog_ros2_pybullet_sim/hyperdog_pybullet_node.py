@@ -26,7 +26,7 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float64MultiArray, Float32MultiArray
 from sensor_msgs.msg import Imu
-from hyperdogv2_msgs.msg import PybulletUserDebugParams
+from hyperdogv2_msgs.msg import PybulletUserDebugParams, JointPositions
 from ament_index_python.packages import get_package_share_directory
 import os
 
@@ -97,7 +97,8 @@ class Ros2HyperdogPybulletNode(Node):
                 ('robot_height_limit', None),
                 ('robot_euler_angle_limit', None)
                 ])
-        self._sub = self.create_subscription(Float32MultiArray, 'hyperdog_jointController/commands', self.__sub_callback, 10)
+        # self._sub = self.create_subscription(Float32MultiArray, 'hyperdog_joint_positions', self.__sub_callback, 10)
+        self._sub = self.create_subscription(JointPositions, 'hyperdog_joint_positions', self.__sub_callback, 10)
         self._joint_state_pub = self.create_publisher(Float32MultiArray, 'hyperdog_sim_joint_position_feedback', 10)
         self._imu_pub = self.create_publisher(Imu, 'hyperdog_sim_imu', 10)
         # self._joint_state_pub_timer = self.create_timer(timer_period_sec=0.005, callback=self.__joint_state_pub_callback)
@@ -115,9 +116,19 @@ class Ros2HyperdogPybulletNode(Node):
         
         # self.timer
 
-    def __sub_callback(self, msg:Float32MultiArray):
-        if len (msg.data) == self._num_of_joints:
-            self.target_joint_positions.data = [msg.data[i]*np.pi/180 for i in range(12)]
+    def __sub_callback(self, msg:JointPositions):
+        joint_angle_offset = [0, 0, np.pi]
+        fr_join_angle_dir = [ 1, 1, -1]
+        fl_join_angle_dir = [-1, 1, -1]
+        br_join_angle_dir = [ 1, 1, -1]
+        bl_join_angle_dir = [-1, 1, -1]
+        fr_angs=[]; fl_angs=[]; br_angs=[]; bl_angs = []
+        for i in range(3):
+            fr_angs.append(joint_angle_offset[i] + fr_join_angle_dir[i]*msg.fr.data[i])
+            fl_angs.append(joint_angle_offset[i] + fl_join_angle_dir[i]*msg.fl.data[i])
+            br_angs.append(joint_angle_offset[i] + br_join_angle_dir[i]*msg.br.data[i])
+            bl_angs.append(joint_angle_offset[i] + bl_join_angle_dir[i]*msg.bl.data[i])
+        self.target_joint_positions.data = fr_angs+fl_angs+br_angs+bl_angs
         
 
     def __update_ros_params(self):
