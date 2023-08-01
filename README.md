@@ -2,7 +2,7 @@
 
 
 
-### $${\color{red}{REPOSITORY_IS_NOT_YET_READY_FOR_USING}}$$ 
+### $${\color{red}{REPOSITORY \space IS \space NOT \space YET \space READY \space FOR \space USING}}$$ 
 
 
 
