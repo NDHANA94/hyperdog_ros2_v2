@@ -1,9 +1,9 @@
 # hyperdog_ros2_v2
 
 
-```diff
-- REPOSITORY IS NOT YET READY FOR USING
-```
+
+$${\color{red}Red}$$ REPOSITORY IS NOT YET READY FOR USING
+
 
 
 HyperDog quadruped robot's updated ros2 pkgs with pybullet simulation
