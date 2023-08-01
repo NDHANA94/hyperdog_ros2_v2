@@ -1,6 +1,6 @@
 # hyperdog_ros2_v2
 
-## <font color="red"> REPOSITORY IS NOT YET READY TO USE </font>
+<font color="red"> REPOSITORY IS NOT YET READY FOR USING </font>
 
 
 HyperDog quadruped robot's updated ros2 pkgs with pybullet simulation
