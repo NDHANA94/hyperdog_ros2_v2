@@ -10,7 +10,11 @@
 HyperDog quadruped robot's updated ros2 pkgs with pybullet simulation
 
 
-Pybullet simulation works, but more to develop.
+Pybullet simulation:
+  robot walks without sliding on the ground. 
+ - added imu topic
+ - added joint torque topic
+
 
 
 TODO:
